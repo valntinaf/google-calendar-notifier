@@ -3,4 +3,4 @@ Google calendar notifier, working with linux. Dunst required.
 
 ## Installation
 
-Generate a credentials.json file
+Generate a credentials.json file enabling the google 
