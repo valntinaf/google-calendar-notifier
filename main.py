@@ -5,10 +5,10 @@ import os.path
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
+import notify2
 
 # If modifying these scopes, delete the file token.pickle.
 SCOPES = ['https://www.googleapis.com/auth/calendar.readonly']
-
 
 def main():
     """Shows basic usage of the Google Calendar API.
@@ -35,21 +35,39 @@ def main():
 
     service = build('calendar', 'v3', credentials=creds)
 
-    # Call the Calendar API
-    now = datetime.datetime.utcnow().isoformat() + 'Z' # 'Z' indicates UTC time
-    print(now)
-    print('Getting the upcoming 10 events')
-    events_result = service.events().list(calendarId='upbiobdi4m0u47uhjepijij6hs@group.calendar.google.com', timeMin=now,
-                                        maxResults=10, singleEvents=True,
-                                        orderBy='startTime').execute()
-    events = events_result.get('items', [])
-    if not events:
-        print('No upcoming events found.')
-    for event in events:
-        start = event['start'].get('dateTime', event['start'].get('date'))
-        print(event)
-        print(start, event['summary'])
+    calendarlist = service.calendarList().list(maxResults=10).execute()
 
+    # Call the Calendar API
+    now = datetime.datetime.utcnow().isoformat() +'Z' # 'Z' indicates UTC time
+
+    notify2.init('notifier')
+
+    for calendar in calendarlist['items']:
+        calendar_id = calendar['id']
+        print("Searching events for "+calendar['summary'])
+
+        events_result = service.events().list(calendarId=calendar_id, timeMin=now,
+                                            maxResults=3, singleEvents=True,
+                                            orderBy='startTime').execute()
+        events = events_result.get('items', [])
+
+        if not events:
+            print('No upcoming events found.')
+
+        for event in events:
+            start = event['start'].get('dateTime', event['start'].get('date'))
+            if event['start'].get('dateTime',False):
+                event_date = datetime.datetime.fromisoformat(event['start']['dateTime'])
+                now_date = datetime.datetime.now()
+                event_date = event_date.replace(tzinfo=None)
+                difference = (event_date - now_date)
+                minutes = difference.total_seconds() / 360
+                if(minutes < 5 ):
+                    n = notify2.Notification(event['summary'],
+                         calendar['summary'],
+                         "/usr/share/icons/Honor/scalable/apps/gnome-calendar.svg"   # Icon name
+                        )
+                    n.show()
 
 if __name__ == '__main__':
     main()
