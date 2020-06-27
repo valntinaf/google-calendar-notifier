@@ -57,9 +57,6 @@ def main():
                                             orderBy='startTime').execute()
         events = events_result.get('items', [])
 
-        if not events:
-            print('No upcoming events found.')
-
         for event in events:
             start = event['start'].get('dateTime', event['start'].get('date'))
             if event['start'].get('dateTime',False):
@@ -68,10 +65,10 @@ def main():
                 event_date = event_date.replace(tzinfo=None)
                 difference = (event_date - now_date)
                 minutes = difference.total_seconds() / 360
-                if(minutes <= 1.5 and minutes > 0):
+                if(minutes <= 1.1 and minutes > 0):
                     n = notify2.Notification(event['summary'],
                          calendar['summary'],
-                         "/usr/share/icons/Honor/scalable/apps/gnome-calendar.svg"   # Icon name
+                         "/opt/google-calendar-notifier/icons/calendar.png"   # Icon name
                         )
                     n.show()
 
